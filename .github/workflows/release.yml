@@ -1,0 +1,49 @@
+name: release
+
+# 仅允许手动触发
+on:
+  workflow_dispatch:
+    inputs:
+      release_name:
+        description: 'Release 标题 (例如:v1.0.0)'
+        required: true
+        type: string
+
+jobs:
+  build-and-release:
+    runs-on: ubuntu-latest
+
+    # 必须赋予写权限，否则无法创建 Release
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v5
+
+      # 配置 Java 环境
+      - name: Set up JDK
+        uses: actions/setup-java@v5
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+          cache: gradle
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+
+      # 编译打包 Release APK
+      - name: Build Release APKs
+        run: ./gradlew assembleRelease
+
+      # 上传所有生成的 APK 到 GitHub Releases
+      - name: Create Release and Upload APKs
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ inputs.release_name }}
+          name: ${{ inputs.release_name }}      # 取自手动触发时填写的标题
+          # 使用通配符 *.apk，把 output 目录下所有的分架构包都传上去
+          files: app/build/outputs/apk/release/*.apk
+          generate_release_notes: true          # 自动生成更新日志
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
