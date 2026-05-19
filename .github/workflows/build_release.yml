@@ -1,4 +1,4 @@
-name: release
+name: build_release
 
 # 仅允许手动触发
 on:
@@ -10,7 +10,7 @@ on:
         type: string
 
 jobs:
-  build-and-release:
+  build_release:
     runs-on: ubuntu-latest
 
     # 必须赋予写权限，否则无法创建 Release
